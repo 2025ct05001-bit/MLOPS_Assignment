@@ -58,8 +58,8 @@ pipeline {
             agent {
                 docker {
                     image 'alpine/helm:3.14.0'
-                    // Added -u root and --entrypoint='' 
-                    args "-u root -v /Users/goutham/.kube:/Users/goutham/.kube -v /Users/goutham/.minikube:/Users/goutham/.minikube -e KUBECONFIG=/Users/goutham/.kube/config --entrypoint=''"
+                    // Added --network host to allow the container to reach Minikube on your Mac
+                    args "-u root --network host -v /Users/goutham/.kube:/Users/goutham/.kube -v /Users/goutham/.minikube:/Users/goutham/.minikube -e KUBECONFIG=/Users/goutham/.kube/config --entrypoint=''"
                 }
             }
             steps {
