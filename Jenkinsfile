@@ -34,8 +34,8 @@ pipeline {
             agent {
                 docker {
                     image 'docker:cli'
-                    // Mounts your Mac's Docker socket so the container can safely build images
-                    args '-v /var/run/docker.sock:/var/run/docker.sock'
+                    // Add '-u root' before the socket mount
+                    args '-u root -v /var/run/docker.sock:/var/run/docker.sock'
                 }
             }
             steps {
