@@ -65,7 +65,7 @@ pipeline {
             steps {
                 echo 'Upgrading Helm release with zero downtime...'
                 sh """
-                    helm upgrade ${RELEASE_NAME} ./heart-disease-api-chart \\
+                    helm upgrade ${RELEASE_NAME} ./helm \\
                         --namespace ${NAMESPACE} \\
                         --set image.repository=${IMAGE_NAME} \\
                         --set image.tag=${IMAGE_TAG}
