@@ -46,6 +46,8 @@ spec:
                         python3 -m venv .jenkins-venv
                         . .jenkins-venv/bin/activate
                         pip install -r requirements.txt fastapi "uvicorn[standard]" pydantic pytest httpx prometheus-fastapi-instrumentator
+                        # Set the model path so FastAPI loads the directory instead of the missing database
+                        export MODEL_PATH="model_export"
                         pytest test_app.py -v
                     '''
                 }
