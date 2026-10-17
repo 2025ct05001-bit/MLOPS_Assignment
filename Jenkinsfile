@@ -45,7 +45,7 @@ spec:
                     sh '''
                         python3 -m venv .jenkins-venv
                         . .jenkins-venv/bin/activate
-                        pip install -r requirements.txt fastapi "uvicorn[standard]" pydantic pytest httpx
+                        pip install -r requirements.txt fastapi "uvicorn[standard]" pydantic pytest httpx prometheus-fastapi-instrumentator
                         pytest test_app.py -v
                     '''
                 }
