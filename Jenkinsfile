@@ -60,9 +60,7 @@ pipeline {
                     image 'alpine/helm:3.14.0'
                     // Maps your Mac's Kubernetes certificates into the Helm container 
                     // using the exact same file paths so Helm can authenticate securely.
-                    args "-v ${env.HOME}/.kube:${env.HOME}/.kube -v ${env.HOME}/.minikube:${env.HOME}/.minikube -e KUBECONFIG=${env.HOME}/.kube/config"
-                }
-            }
+                    args '-v /Users/goutham/.kube:/Users/goutham/.kube -v /Users/goutham/.minikube:/Users/goutham/.minikube -e KUBECONFIG=/Users/goutham/.kube/config'
             steps {
                 echo 'Upgrading Helm release with zero downtime...'
                 sh """
