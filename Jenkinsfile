@@ -55,13 +55,7 @@ pipeline {
         }
 
         stage('Deploy to Kubernetes (CD)') {
-            agent {
-                docker {
-                    image 'alpine/helm:3.14.0'
-                    // Added --network host to allow the container to reach Minikube on your Mac
-                    args "-u root --network host -v /Users/goutham/.kube:/Users/goutham/.kube -v /Users/goutham/.minikube:/Users/goutham/.minikube -e KUBECONFIG=/Users/goutham/.kube/config --entrypoint=''"
-                }
-            }
+            agent any
             steps {
                 echo 'Upgrading Helm release with zero downtime...'
                 sh """
