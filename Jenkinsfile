@@ -1,33 +1,6 @@
 pipeline {
-    agent {
-        kubernetes {
-            yaml '''
-apiVersion: v1
-kind: Pod
-spec:
-  containers:
-  - name: python
-    image: python:3.11-slim
-    command: ['cat']
-    tty: true
-  - name: docker
-    image: docker:cli
-    command: ['cat']
-    tty: true
-    volumeMounts:
-    - name: docker-sock
-      mountPath: /var/run/docker.sock
-  - name: helm
-    image: alpine/helm:3.14.0
-    command: ['cat']
-    tty: true
-  volumes:
-  - name: docker-sock
-    hostPath:
-      path: /var/run/docker.sock
-'''
-        }
-    }
+    // This tells Jenkins not to run everything on the host, but to wait for stage-level instructions
+    agent none 
 
     environment {
         IMAGE_NAME = 'heart-disease-api'
@@ -38,51 +11,66 @@ spec:
 
     stages {
         stage('Unit Testing (CI)') {
-            steps {
-                // Route this step to the Python container
-                container('python') {
-                    echo 'Running automated tests...'
-                    sh '''
-                        python3 -m venv .jenkins-venv
-                        . .jenkins-venv/bin/activate
-                        pip install -r requirements.txt fastapi "uvicorn[standard]" pydantic pytest httpx prometheus-fastapi-instrumentator
-                        # Set the model path so FastAPI loads the directory instead of the missing database
-                        export MODEL_PATH="model_export"
-                        pytest test_app.py -v
-                    '''
+            agent {
+                docker {
+                    // Spins up a clean, isolated Python environment just for this stage
+                    image 'python:3.11-slim'
+                    args '-u root'
                 }
+            }
+            steps {
+                echo 'Running automated tests inside an isolated Python container...'
+                sh '''
+                    # No virtual environment needed here because the entire container is our environment!
+                    pip install --no-cache-dir -r requirements.txt fastapi "uvicorn[standard]" pydantic pytest httpx prometheus-fastapi-instrumentator
+                    
+                    export MODEL_PATH="model_export"
+                    pytest test_app.py -v
+                '''
             }
         }
 
         stage('Build Docker Image') {
-            steps {
-                // Route this step to the Docker container
-                container('docker') {
-                    echo "Building container image ${IMAGE_NAME}:${IMAGE_TAG}..."
-                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+            agent {
+                docker {
+                    image 'docker:cli'
+                    // Mounts your Mac's Docker socket so the container can safely build images
+                    args '-v /var/run/docker.sock:/var/run/docker.sock'
                 }
+            }
+            steps {
+                echo "Building container image ${IMAGE_NAME}:${IMAGE_TAG}..."
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+            }
+        }
+
+        stage('Push to Minikube Cache') {
+            // We run this ONE command on your Mac natively. Minikube is a Mac VM manager, 
+            // so running its CLI from inside a Linux container breaks certificate paths.
+            agent any
+            steps {
+                echo 'Loading image into local Minikube cluster...'
+                sh "minikube image load ${IMAGE_NAME}:${IMAGE_TAG}"
             }
         }
 
         stage('Deploy to Kubernetes (CD)') {
-            steps {
-                // Route this step to the Helm container
-                container('helm') {
-                    echo 'Upgrading Helm release with zero downtime...'
-                    sh """
-                        helm upgrade ${RELEASE_NAME} ./heart-disease-api-chart \\
-                            --namespace ${NAMESPACE} \\
-                            --set image.tag=${IMAGE_TAG}
-                    """
+            agent {
+                docker {
+                    image 'alpine/helm:3.14.0'
+                    // Maps your Mac's Kubernetes certificates into the Helm container 
+                    // using the exact same file paths so Helm can authenticate securely.
+                    args "-v ${env.HOME}/.kube:${env.HOME}/.kube -v ${env.HOME}/.minikube:${env.HOME}/.minikube -e KUBECONFIG=${env.HOME}/.kube/config"
                 }
             }
-        }
-    }
-
-    post {
-        always {
-            container('python') {
-                sh 'rm -rf .jenkins-venv || true'
+            steps {
+                echo 'Upgrading Helm release with zero downtime...'
+                sh """
+                    helm upgrade ${RELEASE_NAME} ./heart-disease-api-chart \\
+                        --namespace ${NAMESPACE} \\
+                        --set image.repository=${IMAGE_NAME} \\
+                        --set image.tag=${IMAGE_TAG}
+                """
             }
         }
     }
