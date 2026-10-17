@@ -62,6 +62,7 @@ pipeline {
                     // using the exact same file paths so Helm can authenticate securely.
                     args '-v /Users/goutham/.kube:/Users/goutham/.kube -v /Users/goutham/.minikube:/Users/goutham/.minikube -e KUBECONFIG=/Users/goutham/.kube/config'
                 }
+            }
             steps {
                 echo 'Upgrading Helm release with zero downtime...'
                 sh """
