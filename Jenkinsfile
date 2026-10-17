@@ -34,8 +34,8 @@ pipeline {
             agent {
                 docker {
                     image 'docker:cli'
-                    // Add '-u root' before the socket mount
-                    args '-u root -v /var/run/docker.sock:/var/run/docker.sock'
+                    // Wrapped in double quotes, added --entrypoint='' at the end
+                    args "-u root -v /var/run/docker.sock:/var/run/docker.sock --entrypoint=''"
                 }
             }
             steps {
@@ -58,9 +58,8 @@ pipeline {
             agent {
                 docker {
                     image 'alpine/helm:3.14.0'
-                    // Maps your Mac's Kubernetes certificates into the Helm container 
-                    // using the exact same file paths so Helm can authenticate securely.
-                    args '-v /Users/goutham/.kube:/Users/goutham/.kube -v /Users/goutham/.minikube:/Users/goutham/.minikube -e KUBECONFIG=/Users/goutham/.kube/config'
+                    // Added -u root and --entrypoint='' 
+                    args "-u root -v /Users/goutham/.kube:/Users/goutham/.kube -v /Users/goutham/.minikube:/Users/goutham/.minikube -e KUBECONFIG=/Users/goutham/.kube/config --entrypoint=''"
                 }
             }
             steps {
