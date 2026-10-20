@@ -1,0 +1,16 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: heart-disease-api-monitor
+  namespace: heart-disease
+  labels:
+    release: metrics-stack  # <-- This tells Prometheus it is allowed to read this file
+spec:
+  selector:
+    matchLabels:
+      # This MUST match the labels in your FastAPI Deployment/Service
+      app.kubernetes.io/managed-by: Helm
+  endpoints:
+  - targetPort: 8000
+    path: /metrics
+    interval: 15s

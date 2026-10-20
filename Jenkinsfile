@@ -34,7 +34,6 @@ pipeline {
             agent {
                 docker {
                     image 'docker:cli'
-                    // Wrapped in double quotes, added --entrypoint='' at the end
                     args "-u root -v /var/run/docker.sock:/var/run/docker.sock --entrypoint=''"
                 }
             }
@@ -45,8 +44,6 @@ pipeline {
         }
 
         stage('Push to Minikube Cache') {
-            // We run this ONE command on your Mac natively. Minikube is a Mac VM manager, 
-            // so running its CLI from inside a Linux container breaks certificate paths.
             agent any
             steps {
                 echo 'Loading image into local Minikube cluster...'
