@@ -55,12 +55,13 @@ def main():
             "precision": precision_score(y_te, preds),
             "recall": recall_score(y_te, preds),
             "roc_auc": roc_auc_score(y_te, proba),
+            "f1_score": 2 * (precision_score(y_te, preds) * recall_score(y_te, preds)) / (precision_score(y_te, preds) + recall_score(y_te, preds))
         }
         mlflow.log_metrics(metrics)
 
         # Log Model
         mlflow.sklearn.log_model(pipe, artifact_path="model")
-        print(f"Model logged. AUC: {metrics['roc_auc']:.4f}")
+        print(f"Model logged. AUC: {metrics['roc_auc']:.4f}, F1 Score: {metrics['f1_score']:.4f}, accuracy: {metrics['accuracy']:.4f}, precision: {metrics['precision']:.4f}, recall: {metrics['recall']:.4f}")
 
 if __name__ == "__main__":
     main()
